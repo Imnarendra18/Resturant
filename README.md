@@ -1,76 +1,115 @@
-# 🍽️ Restaurant Management System
+# 🍽️ Restaurant Management System (MERN Stack)
 
-A complete **Restaurant Management System** built using modern web technologies to manage restaurant operations efficiently. This project helps in handling orders, menu management, customer interactions, and admin controls in a simple and user-friendly way.
+A full-stack **Restaurant Management System** built using **MongoDB, Express.js, React, and Node.js**. This application helps manage restaurant operations like users, menu, orders, staff, inventory, and more.
 
 ---
 
 ## 🚀 Features
 
-### 👤 User Features
+### 👤 User & Authentication
 
-* 🔐 User Registration & Login
-* 🍔 Browse Menu Items
-* 🛒 Add to Cart
-* 📦 Place Orders
-* 📄 View Order History
-* 📱 Responsive UI
+* 🔐 Secure Login & Registration
+* 🔑 Role-Based Access (Admin, Cashier, Accountant)
+* 🔒 Password Hashing using bcrypt
+* 🗂️ Session / Token-based Authentication
 
 ---
 
-### 🛠️ Admin Features
+### 🍔 Menu Management
 
-* 🔑 Admin Login
-* ➕ Add / Update / Delete Menu Items
-* 📊 Manage Orders
-* 👥 Manage Users
-* 📈 Dashboard Overview
-
----
-
-### ⚙️ System Features
-
-* 🔒 Secure Authentication
-* 🗂️ Session Management
-* 📡 Real-time Order Handling
-* 💾 Database Integration
-* 🌐 Responsive Design (Mobile + Desktop)
+* ➕ Add New Menu Items
+* ✏️ Update Food Details
+* ❌ Delete Items
+* 📋 View Complete Menu
 
 ---
 
-## 🧑‍💻 Technologies Used
+### 🛒 Order Management
 
-### Frontend:
+* 🧾 Create Orders
+* 📦 Track Orders
+* 📊 Order History
+* 💰 Billing System
 
-* HTML5
-* CSS3
-* Bootstrap
-* JavaScript / React (if used)
+---
 
-### Backend:
+### 👨‍💼 Staff Management
 
-* Java (Servlets & JSP) / PHP / Node.js (based on your project)
+* ➕ Add Staff
+* 📋 Manage Roles (Admin, Cashier, Accountant)
+* 💼 Payroll System
 
-### Database:
+---
 
-* MySQL
+### 🏬 Inventory & Supplier
 
-### Tools:
+* 📦 Manage Ingredients
+* 🚚 Supplier Management
+* 📊 Purchase Tracking
 
-* Git & GitHub
-* Eclipse / VS Code
-* Apache Tomcat Server
+---
+
+### ⚙️ Additional Modules
+
+* 🖨️ Printer Integration
+* 🏠 Room/Table Management
+* ⚙️ Settings Configuration
+* 💸 Discount System
+
+---
+
+## 🧑‍💻 Tech Stack
+
+### Frontend
+
+* React.js
+* Vite
+* CSS / Tailwind (if used)
+
+### Backend
+
+* Node.js
+* Express.js
+
+### Database
+
+* MongoDB (Mongoose)
 
 ---
 
 ## 📁 Project Structure
 
-```
-Restaurant-Management-System/
-│── src/
-│── public/
-│── database/
+```bash
+Resturant/
+│── Backend/
+│   ├── Models/
+│   │   ├── User.js
+│   │   ├── MenuItem.js
+│   │   ├── Order.js
+│   │   ├── Staff.js
+│   │   ├── Supplier.js
+│   │   ├── Purchase.js
+│   │   ├── Ingredient.js
+│   │   ├── Payroll.js
+│   │   ├── Room.js
+│   │   ├── Discount.js
+│   │   ├── Printer.js
+│   │   └── Settings.js
+│   ├── Routes/
+│   ├── server.js
+│   └── .env
+│
+│── Frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── app/
+│   │   └── App.jsx
+│   ├── public/
+│   └── index.html
+│
+│── package.json
 │── README.md
-│── pom.xml (if Maven)
 ```
 
 ---
@@ -81,156 +120,118 @@ Restaurant-Management-System/
 
 ```bash
 git clone https://github.com/your-username/restaurant-management-system.git
-```
-
-### 🔹 2. Open Project
-
-* Import into IDE (Eclipse / VS Code)
-
-### 🔹 3. Setup Database
-
-* Create MySQL database
-* Import SQL file
-
-### 🔹 4. Run Project
-
-* Start Apache Tomcat Server
-* Open browser:
-
-```
-http://localhost:8080/RestaurantManagementSystem
+cd restaurant-management-system
 ```
 
 ---
 
-## 🔐 Default Credentials (Optional)
+### 🔹 2. Setup Backend
 
-**Admin:**
+```bash
+cd Backend
+npm install
+```
 
-* Username: admin
-* Password: admin123
+Create `.env` file:
+
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection
+JWT_SECRET=your_secret_key
+```
+
+Run backend:
+
+```bash
+npm start
+```
+
+---
+
+### 🔹 3. Setup Frontend
+
+```bash
+cd ../Frontend
+npm install
+npm run dev
+```
+
+---
+
+### 🔹 4. Open App
+
+```
+http://localhost:5173
+```
 
 ---
 
 ## 📸 Screenshots
 
-* Login Page
-* Dashboard
-* Menu Page
-* Order Page
-
-*(Add screenshots here)*
-
----
-
-## 🎯 Future Enhancements
-
-* 💳 Online Payment Integration
-* 📱 Mobile App Version
-* 📊 Advanced Analytics Dashboard
-* 🔔 Notification System
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-Feel free to fork this repository and submit a pull request.
-
----
-
-## 📄 License
-
-This project is open-source and available under the MIT License.
-
----
-
-## 👨‍💻 Author
-
-**Narendra Kumar Yadav**
-
----
-
-## ⭐ 
-## 📸 Screenshots
-
-### 🔐 Login Page
+### 🔐 Login & User Management
 
 <p align="center">
-  <img src="screenshots/login.png" width="700" alt="Login Page"/>
+  <img src="screenshots/login.png" width="45%" />
+  <img src="screenshots/user-dashboard.png" width="45%" />
 </p>
 
 ---
 
-### 📝 Registration Page
+### 🍔 Menu & Orders
 
 <p align="center">
-  <img src="screenshots/register.png" width="700" alt="Register Page"/>
+  <img src="screenshots/menu.png" width="45%" />
+  <img src="screenshots/orders.png" width="45%" />
 </p>
 
 ---
 
-### 🍽️ Menu Page
+### 👨‍💼 Staff & Payroll
 
 <p align="center">
-  <img src="screenshots/menu.png" width="700" alt="Menu Page"/>
+  <img src="screenshots/staff.png" width="45%" />
+  <img src="screenshots/payroll.png" width="45%" />
 </p>
 
 ---
 
-### 🛒 Cart Page
+### 📦 Inventory & Suppliers
 
 <p align="center">
-  <img src="screenshots/cart.png" width="700" alt="Cart Page"/>
+  <img src="screenshots/inventory.png" width="45%" />
+  <img src="screenshots/supplier.png" width="45%" />
 </p>
 
 ---
 
-### 📦 Order Page
+### ⚙️ System Modules
 
 <p align="center">
-  <img src="screenshots/order.png" width="700" alt="Order Page"/>
-</p>
-
----
-
-### 🛠️ Admin Dashboard
-
-<p align="center">
-  <img src="screenshots/admin-dashboard.png" width="700" alt="Admin Dashboard"/>
-</p>
-
----
-
-### 📊 Reports / Analytics
-
-<p align="center">
-  <img src="screenshots/reports.png" width="700" alt="Reports"/>
+  <img src="screenshots/settings.png" width="45%" />
+  <img src="screenshots/reports.png" width="45%" />
 </p>
 
 ---
 
 ## 🧾 How to Add Screenshots
 
-1. Create a folder in your project:
+1. Create folder:
 
-```
+```bash
 screenshots/
 ```
 
-2. Add your images:
+2. Add images (example):
 
-```
+```bash
 login.png
-register.png
 menu.png
-cart.png
-order.png
-admin-dashboard.png
-reports.png
+orders.png
+staff.png
+inventory.png
 ```
 
-3. Commit & push to GitHub:
+3. Push:
 
 ```bash
 git add .
@@ -240,16 +241,27 @@ git push
 
 ---
 
-## 💡 Tips
+## 🎯 Future Enhancements
 
-* Use **clear and high-quality images**
-* Keep same width (600–800px)
-* Name files properly (no spaces)
-* Use PNG/JPG format
+* 💳 Online Payment Integration
+* 📱 Mobile App
+* 🔔 Notification System
+* 📊 Advanced Analytics Dashboard
 
 ---
 
-⭐ This will make your GitHub project look **professional and attractive**
+## 🤝 Contributing
 
+Feel free to fork and contribute to this project.
 
-If you like this project, please ⭐ star the repository on GitHub!
+---
+
+## 👨‍💻 Author
+
+**Narendra Kumar Yadav**
+
+---
+
+## ⭐ Support
+
+If you like this project, please ⭐ star the repo!
