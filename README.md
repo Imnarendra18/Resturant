@@ -1,87 +1,156 @@
-# 🍽️ Restaurant Management System (ERP & POS)
+# 🍽️ Restaurant Management System
 
-A modern **Restaurant ERP & POS Management System** built using **Next.js**, designed to manage restaurant operations such as orders, billing, dashboard analytics, and users management.
-
----
-
-## 🚀 Live Demo
-Coming Soon...
+A complete **Restaurant Management System** built using modern web technologies to manage restaurant operations efficiently. This project helps in handling orders, menu management, customer interactions, and admin controls in a simple and user-friendly way.
 
 ---
 
-## 📌 Features
+## 🚀 Features
 
-### 👨‍💼 Admin Dashboard
-- Sales Analytics
-- Revenue Overview
-- User Management
-- Role-based Access Control
-- Reports & Statistics
+### 👤 User Features
 
-### 🧾 POS (Point of Sale)
-- Create Orders
-- Add / Remove Menu Items
-- Real-time Billing
-- Checkout System
-- Payment Processing
-- Receipt Generation
-
-### 🍴 Table Management
-- Table Status Tracking
-- Assign Orders to Tables
-- Open / Close Tables
-- Dining Management
-
-### 💳 Billing & Payments
-- Invoice Generation
-- Multiple Payment Methods
-- Order History
-- Daily Sales Tracking
-
-### 🔐 Authentication
-- Secure Login System
-- Protected Routes
-- Middleware Security
-- Admin / Cashier Roles
+* 🔐 User Registration & Login
+* 🍔 Browse Menu Items
+* 🛒 Add to Cart
+* 📦 Place Orders
+* 📄 View Order History
+* 📱 Responsive UI
 
 ---
 
-## 🛠️ Tech Stack
+### 🛠️ Admin Features
 
-- **Frontend:** Next.js 16, React
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **Backend:** Express API
-- **Database:** MongoDB
-- **Authentication:** Session-based Auth
-- **Deployment:** Vercel
+* 🔑 Admin Login
+* ➕ Add / Update / Delete Menu Items
+* 📊 Manage Orders
+* 👥 Manage Users
+* 📈 Dashboard Overview
 
 ---
 
-## 📂 Project Structure
-src/
-├── app/
-│ ├── admin/
-│ ├── cashier/
-│ ├── dashboard/
-│ ├── auth/
-│ └── api/
-├── components/
-├── hooks/
-├── lib/
-└── middleware/
+### ⚙️ System Features
+
+* 🔒 Secure Authentication
+* 🗂️ Session Management
+* 📡 Real-time Order Handling
+* 💾 Database Integration
+* 🌐 Responsive Design (Mobile + Desktop)
 
 ---
 
-## ⚙️ Installation & Setup
+## 🧑‍💻 Technologies Used
 
-### 1️⃣ Clone Repository
+### Frontend:
+
+* HTML5
+* CSS3
+* Bootstrap
+* JavaScript / React (if used)
+
+### Backend:
+
+* Java (Servlets & JSP) / PHP / Node.js (based on your project)
+
+### Database:
+
+* MySQL
+
+### Tools:
+
+* Git & GitHub
+* Eclipse / VS Code
+* Apache Tomcat Server
+
+---
+
+## 📁 Project Structure
+
+```
+Restaurant-Management-System/
+│── src/
+│── public/
+│── database/
+│── README.md
+│── pom.xml (if Maven)
+```
+
+---
+
+## ⚡ Installation & Setup
+
+### 🔹 1. Clone Repository
 
 ```bash
-git clone https://github.com/Imnarendra18/restaurant-management-system.git
-cd restaurant-management-system
-npm install
-npm run dev
-http://localhost:3000
-DATABASE_URL=your_database_url
-NEXTAUTH_SECRET=your_secret
+git clone https://github.com/your-username/restaurant-management-system.git
+```
+
+### 🔹 2. Open Project
+
+* Import into IDE (Eclipse / VS Code)
+
+### 🔹 3. Setup Database
+
+* Create MySQL database
+* Import SQL file
+
+### 🔹 4. Run Project
+
+* Start Apache Tomcat Server
+* Open browser:
+
+```
+http://localhost:8080/RestaurantManagementSystem
+```
+
+---
+
+## 🔐 Default Credentials (Optional)
+
+**Admin:**
+
+* Username: admin
+* Password: admin123
+
+---
+
+## 📸 Screenshots
+
+* Login Page
+* Dashboard
+* Menu Page
+* Order Page
+
+*(Add screenshots here)*
+
+---
+
+## 🎯 Future Enhancements
+
+* 💳 Online Payment Integration
+* 📱 Mobile App Version
+* 📊 Advanced Analytics Dashboard
+* 🔔 Notification System
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+Feel free to fork this repository and submit a pull request.
+
+---
+
+## 📄 License
+
+This project is open-source and available under the MIT License.
+
+---
+
+## 👨‍💻 Author
+
+**Narendra Kumar Yadav**
+
+---
+
+## ⭐ Support
+
+If you like this project, please ⭐ star the repository on GitHub!
