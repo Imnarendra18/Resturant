@@ -171,8 +171,11 @@ http://localhost:5173
 ### 🔐 Login & User Management
 
 <p align="center">
-  <img src="screenshots/login.png" width="45%" />
-  <img src="screenshots/user-dashboard.png" width="45%" />
+  <img width="465" height="438" alt="image" src="https://github.com/user-attachments/assets/2e095262-7cc7-47af-8a76-6cce36ef2795" />
+
+  <img width="1344" height="681" alt="image" src="https://github.com/user-attachments/assets/cfc34b02-8d41-4e45-8467-40c0340d124a" />
+<img width="1353" height="686" alt="image" src="https://github.com/user-attachments/assets/8c217ffc-18b4-47c3-baa5-2313be18d1fe" />
+
 </p>
 
 ---
@@ -180,8 +183,10 @@ http://localhost:5173
 ### 🍔 Menu & Orders
 
 <p align="center">
-  <img src="screenshots/menu.png" width="45%" />
-  <img src="screenshots/orders.png" width="45%" />
+  <img width="1361" height="649" alt="image" src="https://github.com/user-attachments/assets/f9030258-ee18-453f-afab-6efbc21e3223" />
+
+  <img width="1356" height="685" alt="image" src="https://github.com/user-attachments/assets/f1f5a3d8-2a43-45f6-ac2d-c004a43111a7" />
+
 </p>
 
 ---
@@ -189,7 +194,9 @@ http://localhost:5173
 ### 👨‍💼 Staff & Payroll
 
 <p align="center">
-  <img src="screenshots/staff.png" width="45%" />
+  <img width="1347" height="679" alt="image" src="https://github.com/user-attachments/assets/84efe2e8-573d-4cef-87dc-fdac60f418c5" />
+   <img width="1359" height="686" alt="image" src="https://github.com/user-attachments/assets/f5bd9434-73d3-466b-b63e-c61e3bd7bec0" />
+
   <img src="screenshots/payroll.png" width="45%" />
 </p>
 
@@ -198,8 +205,11 @@ http://localhost:5173
 ### 📦 Inventory & Suppliers
 
 <p align="center">
-  <img src="screenshots/inventory.png" width="45%" />
-  <img src="screenshots/supplier.png" width="45%" />
+  <img width="1355" height="719" alt="image" src="https://github.com/user-attachments/assets/c109675e-11e7-494b-ab48-62f5f9626c47" />
+  <img width="1358" height="682" alt="image" src="https://github.com/user-attachments/assets/930f4a44-1ab5-49a0-938d-040d851a4f87" />
+
+  <img width="1355" height="687" alt="image" src="https://github.com/user-attachments/assets/8a39c360-c4a1-4e02-b6bf-e88b8b9b42f7" />
+
 </p>
 
 ---
@@ -224,7 +234,8 @@ screenshots/
 2. Add images (example):
 
 ```bash
-login.png
+<img width="1358" height="682" alt="image" src="https://github.com/user-attachments/assets/358480d4-b339-4965-aae5-effd071b80bc" />
+
 menu.png
 orders.png
 staff.png
