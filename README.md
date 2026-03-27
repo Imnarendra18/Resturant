@@ -151,6 +151,105 @@ This project is open-source and available under the MIT License.
 
 ---
 
-## ⭐ Support
+## ⭐ 
+## 📸 Screenshots
+
+### 🔐 Login Page
+
+<p align="center">
+  <img src="screenshots/login.png" width="700" alt="Login Page"/>
+</p>
+
+---
+
+### 📝 Registration Page
+
+<p align="center">
+  <img src="screenshots/register.png" width="700" alt="Register Page"/>
+</p>
+
+---
+
+### 🍽️ Menu Page
+
+<p align="center">
+  <img src="screenshots/menu.png" width="700" alt="Menu Page"/>
+</p>
+
+---
+
+### 🛒 Cart Page
+
+<p align="center">
+  <img src="screenshots/cart.png" width="700" alt="Cart Page"/>
+</p>
+
+---
+
+### 📦 Order Page
+
+<p align="center">
+  <img src="screenshots/order.png" width="700" alt="Order Page"/>
+</p>
+
+---
+
+### 🛠️ Admin Dashboard
+
+<p align="center">
+  <img src="screenshots/admin-dashboard.png" width="700" alt="Admin Dashboard"/>
+</p>
+
+---
+
+### 📊 Reports / Analytics
+
+<p align="center">
+  <img src="screenshots/reports.png" width="700" alt="Reports"/>
+</p>
+
+---
+
+## 🧾 How to Add Screenshots
+
+1. Create a folder in your project:
+
+```
+screenshots/
+```
+
+2. Add your images:
+
+```
+login.png
+register.png
+menu.png
+cart.png
+order.png
+admin-dashboard.png
+reports.png
+```
+
+3. Commit & push to GitHub:
+
+```bash
+git add .
+git commit -m "Added screenshots"
+git push
+```
+
+---
+
+## 💡 Tips
+
+* Use **clear and high-quality images**
+* Keep same width (600–800px)
+* Name files properly (no spaces)
+* Use PNG/JPG format
+
+---
+
+⭐ This will make your GitHub project look **professional and attractive**
+
 
 If you like this project, please ⭐ star the repository on GitHub!
