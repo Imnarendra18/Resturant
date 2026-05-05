@@ -58,7 +58,7 @@ function TableOrderContent({ tableId }) {
   const orderType = searchParams.get("type") || "new";
   
   const isSpecialOrder = tableId === "takeaway" || tableId === "delivery";
-  const isExistingOrder = orderType === "existing";
+  const isExistingOrderFromUrl = orderType === "existing";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -69,32 +69,44 @@ function TableOrderContent({ tableId }) {
     address: "",
     remarks: "",
   });
+  const [discountType, setDiscountType] = useState("%"); // "%" or "Flat"
   const [discountPercent, setDiscountPercent] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [cashReceived, setCashReceived] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [initialItemQuantities, setInitialItemQuantities] = useState({});
 
   // Queries
   const menuData = useQuery(api.menu.getForPOS);
-  const table = !isSpecialOrder ? useQuery(api.tables.getById, { id: tableId  }) : null;
-  const existingOrder = !isSpecialOrder && isExistingOrder 
-    ? useQuery(api.orders.getActiveOrderWithItems, { tableId: tableId  }) 
-    : null;
+  const table = useQuery(api.tables.getById, { id: tableId });
+  const existingOrder = useQuery(api.orders.getActiveOrderWithItems, { tableId });
 
   // Auth + cashier session
-  const { data: authSession } = authClient.useSession();
-  const activeCashierSession = _optionalChain([authSession, 'optionalAccess', _ => _.user, 'optionalAccess', _2 => _2.id])
-    ? useQuery(api.cashierSessions.getActive, { cashierId: authSession.user.id })
-    : null;
+  const { data: authSession, isPending: isAuthPending } = authClient.useSession();
+  const cashierId = _optionalChain([authSession, 'optionalAccess', _ => _.user, 'optionalAccess', _2 => _2.id]);
+  const activeCashierSession = useQuery(api.cashierSessions.getActive, { cashierId: cashierId || "" });
+  const isCashierSessionPending = Boolean(cashierId) && activeCashierSession === undefined;
 
   // Mutations
   const createOrder = useMutation(api.orders.create);
   const addOrderItem = useMutation(api.orders.addItem);
   const completePayment = useMutation(api.orders.completePayment);
 
+  // Determine if this is actually an existing order (either from URL or query result)
+  const isExistingOrder = isExistingOrderFromUrl || Boolean(existingOrder?._id);
+
   // Load existing order items when viewing a running table
   useEffect(() => {
-    if (_optionalChain([existingOrder, 'optionalAccess', _3 => _3.items]) && existingOrder.items.length > 0) {
+    // If NOT an existing order, clear items (this is a new order)
+    if (!isExistingOrder) {
+      setOrderItems([]);
+      setInitialItemQuantities({});
+      setCustomerDetails({ name: "", phone: "", address: "", remarks: "" });
+      return;
+    }
+    
+    // If existing order, load the items
+    if (existingOrder && existingOrder.items && existingOrder.items.length > 0) {
       const items = existingOrder.items.map((item) => ({
         _id: item._id,
         menuItemId: item.menuItemId,
@@ -105,6 +117,13 @@ function TableOrderContent({ tableId }) {
         notes: item.notes,
       }));
       setOrderItems(items);
+
+      // Preserve original quantities so update can send only newly added items.
+      const quantities = existingOrder.items.reduce((acc, item) => {
+        acc[item.menuItemId] = (acc[item.menuItemId] || 0) + item.quantity;
+        return acc;
+      }, {});
+      setInitialItemQuantities(quantities);
       
       // Load customer details
       if (existingOrder.customerName) {
@@ -116,14 +135,16 @@ function TableOrderContent({ tableId }) {
         });
       }
     }
-  }, [existingOrder]);
+  }, [existingOrder, isExistingOrder]);
 
   // Calculations
   const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  const discountAmount = discountPercent ? (subtotal * parseFloat(discountPercent)) / 100 : 0;
-  const total = subtotal - discountAmount;
+  const discountAmount = discountPercent 
+    ? (discountType === "%" ? (subtotal * parseFloat(discountPercent)) / 100 : parseFloat(discountPercent))
+    : 0;
+  const total = Math.max(0, subtotal - discountAmount);
   const cashReceivedNum = parseFloat(cashReceived) || 0;
-  const changeAmount = cashReceivedNum > total ? cashReceivedNum - total : 0;
+  const changeAmount = paymentMethod === "cash" && cashReceivedNum > total ? cashReceivedNum - total : 0;
 
   const handleAddItem = (menuItem) => {
     const existingIndex = orderItems.findIndex((item) => item.menuItemId === menuItem._id);
@@ -180,8 +201,18 @@ function TableOrderContent({ tableId }) {
       return;
     }
 
+    if (isAuthPending || isCashierSessionPending) {
+      toast.error("Please wait, validating cashier session...");
+      return;
+    }
+
+    if (!cashierId) {
+      toast.error("Session expired. Please login again.");
+      return;
+    }
+
     // Require an open cashier session
-    if (!authSession || !authSession.user || !activeCashierSession) {
+    if (!activeCashierSession) {
       toast.error("No open cashier session. Please open a session before creating orders.");
       return;
     }
@@ -192,7 +223,7 @@ function TableOrderContent({ tableId }) {
       const orderId = await createOrder({
         orderType: isSpecialOrder ? (tableId === "takeaway" ? "takeaway" : "delivery") : "dine_in",
         tableId: isSpecialOrder ? undefined : tableId ,
-        cashierId: authSession.user.id,
+        cashierId,
         sessionId: activeCashierSession._id ,
         customerName: customerDetails.name || undefined,
         customerPhone: customerDetails.phone || undefined,
@@ -228,7 +259,56 @@ function TableOrderContent({ tableId }) {
 
     setIsLoading(true);
     try {
-      // TODO: Implement order update logic
+      if (!_optionalChain([existingOrder, 'optionalAccess', _4 => _4._id])) {
+        toast.error("No active order found for this table");
+        return;
+      }
+
+      const currentQuantities = orderItems.reduce((acc, item) => {
+        acc[item.menuItemId] = (acc[item.menuItemId] || 0) + item.quantity;
+        return acc;
+      }, {});
+
+      const hasRemovedExistingItems = Object.entries(initialItemQuantities).some(([menuItemId, previousQty]) => {
+        const currentQty = currentQuantities[menuItemId] || 0;
+        return currentQty < previousQty;
+      });
+
+      if (hasRemovedExistingItems) {
+        toast.error("Removing existing items is not supported from this screen");
+        return;
+      }
+
+      const itemsToAdd = [];
+      for (const [menuItemId, currentQty] of Object.entries(currentQuantities)) {
+        const previousQty = initialItemQuantities[menuItemId] || 0;
+        const qtyToAdd = currentQty - previousQty;
+        if (qtyToAdd > 0) {
+          const sourceItem = orderItems.find((item) => item.menuItemId === menuItemId);
+          if (sourceItem) {
+            itemsToAdd.push({
+              menuItemId,
+              quantity: qtyToAdd,
+              notes: sourceItem.notes,
+            });
+          }
+        }
+      }
+
+      if (itemsToAdd.length === 0) {
+        toast.error("No new items to update");
+        return;
+      }
+
+      for (const item of itemsToAdd) {
+        await addOrderItem({
+          orderId: existingOrder._id,
+          menuItemId: item.menuItemId ,
+          quantity: item.quantity,
+          notes: item.notes,
+        });
+      }
+
       toast.success("Order updated successfully!");
       navigate("/cashier/pos");
     } catch (e2) {
@@ -247,6 +327,10 @@ function TableOrderContent({ tableId }) {
       toast.error("Insufficient cash received");
       return;
     }
+    if (paymentMethod === "qr" && !cashReceived) {
+      toast.error("Enter Fonepay amount");
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -254,13 +338,16 @@ function TableOrderContent({ tableId }) {
         await completePayment({
           orderId: existingOrder._id,
           paymentMethod,
-          amountPaid: paymentMethod === "cash" ? cashReceivedNum : total,
+          amountPaid: paymentMethod === "cash" ? cashReceivedNum : (paymentMethod === "qr" ? parseFloat(cashReceived) : total),
+          discountAmount,
+          totalAmount: total,
         });
       }
       toast.success("Payment completed successfully!");
       navigate("/cashier/pos");
     } catch (e3) {
       toast.error("Failed to process payment");
+      console.error(e3);
     } finally {
       setIsLoading(false);
     }
@@ -427,9 +514,12 @@ function TableOrderContent({ tableId }) {
               )
               , React.createElement('div', {}
                 , React.createElement('span', { className: "font-semibold"}, "Disc. Type" )
-                , React.createElement('select', { className: "w-full h-6 text-xs border border-border rounded mt-0.5 bg-background"       }
-                  , React.createElement('option', {}, "%")
-                  , React.createElement('option', {}, "Flat")
+                , React.createElement('select', { 
+                  value: discountType,
+                  onChange: (e) => setDiscountType(e.target.value),
+                  className: "w-full h-6 text-xs border border-border rounded mt-0.5 bg-background"       }
+                  , React.createElement('option', { value: "%"}, "%")
+                  , React.createElement('option', { value: "Flat"}, "Flat")
                 )
               )
               , React.createElement('div', {}
@@ -465,8 +555,11 @@ function TableOrderContent({ tableId }) {
               , React.createElement('div', {}
                 , React.createElement('span', { className: "font-semibold text-muted-foreground" }, "Fonepay Amt" )
                 , React.createElement(Input, {
+                  type: "number",
+                  value: paymentMethod === "qr" ? cashReceived : "",
+                  onChange: (e) => setCashReceived(e.target.value),
+                  placeholder: "Enter Fonepay amount",
                   disabled: paymentMethod !== "qr",
-                  placeholder: "Fonepay",
                   className: "h-6 text-xs mt-0.5 disabled:bg-muted"   }
                 )
               )

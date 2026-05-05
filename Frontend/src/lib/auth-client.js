@@ -1,21 +1,115 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { api, BASE_URL } from "./api";
+
+const sessionListeners = new Set();
+let sessionState = {
+  status: "unknown",
+  data: null,
+  error: null,
+};
+let sessionRequest = null;
+
+function emitSessionChange() {
+  sessionListeners.forEach((listener) => listener());
+}
+
+function setSessionState(nextState) {
+  sessionState = nextState;
+  emitSessionChange();
+}
+
+function getSessionSnapshot() {
+  return sessionState;
+}
+
+async function fetchSession({ force = false } = {}) {
+  if (!force) {
+    if (sessionState.status === "ready") {
+      return sessionState.data;
+    }
+    if (sessionRequest) {
+      return sessionRequest;
+    }
+  }
+
+  setSessionState({
+    status: "loading",
+    data: sessionState.data,
+    error: null,
+  });
+
+  sessionRequest = (async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/auth/session`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (res.status === 401) {
+        setSessionState({
+          status: "ready",
+          data: null,
+          error: null,
+        });
+        return null;
+      }
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "Session check failed");
+
+      setSessionState({
+        status: "ready",
+        data: result,
+        error: null,
+      });
+      return result;
+    } catch (err) {
+      setSessionState({
+        status: "error",
+        data: null,
+        error: err,
+      });
+      throw err;
+    } finally {
+      sessionRequest = null;
+    }
+  })();
+
+  return sessionRequest;
+}
 
 /**
  * Auth helpers backed by the Express API.
  * Session is stored in httpOnly cookie; these helpers keep React views in sync.
  */
 export async function login(email, password) {
-  return api.post("/auth/login", { email, password });
+  const result = await api.post("/auth/login", { email, password });
+  setSessionState({
+    status: "ready",
+    data: result,
+    error: null,
+  });
+  return result;
 }
 
 export async function registerUser({ name, email, password, role = "cashier" }) {
-  return api.post("/auth/register", { name, email, password, role });
+  const result = await api.post("/auth/register", { name, email, password, role });
+  setSessionState({
+    status: "ready",
+    data: result,
+    error: null,
+  });
+  return result;
 }
 
 export async function logout() {
   try {
     await api.post("/auth/logout", {});
+    setSessionState({
+      status: "ready",
+      data: null,
+      error: null,
+    });
   } catch (err) {
     // Ignore logout failures so UI can still proceed
     console.error("Logout failed", err);
@@ -23,43 +117,25 @@ export async function logout() {
 }
 
 export function useSession() {
-  const [data, setData] = useState(null);
-  const [isPending, setIsPending] = useState(true);
-  const [error, setError] = useState(null);
-
-  const refresh = useCallback(async () => {
-    setIsPending(true);
-    try {
-      const res = await fetch(`${BASE_URL}/auth/session`, {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.status === 401) {
-        setData(null);
-        setError(null);
-        return null;
-      }
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Session check failed");
-      setData(result);
-      setError(null);
-      return result;
-    } catch (err) {
-      setData(null);
-      setError(err);
-    } finally {
-      setIsPending(false);
-    }
+  const subscribe = useCallback((listener) => {
+    sessionListeners.add(listener);
+    return () => sessionListeners.delete(listener);
   }, []);
 
+  const snapshot = useSyncExternalStore(subscribe, getSessionSnapshot, getSessionSnapshot);
+
+  const refresh = useCallback(async () => fetchSession({ force: true }), []);
+
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    if (snapshot.status === "unknown") {
+      refresh();
+    }
+  }, [refresh, snapshot.status]);
 
   return {
-    data: data?.user ? { user: data.user } : null,
-    isPending,
-    error,
+    data: snapshot.data?.user ? { user: snapshot.data.user } : null,
+    isPending: snapshot.status === "unknown" || snapshot.status === "loading",
+    error: snapshot.error,
     refresh,
   };
 }

@@ -16,20 +16,35 @@ import { login } from "@/lib/auth-client";
 function LoginForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = searchParams.get("callbackUrl");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const getLandingUrl = (role) => {
+    const normalizedRole = role === "accountant" ? "account" : role;
+
+    switch (normalizedRole) {
+      case "admin":
+        return "/admin/dashboard";
+      case "account":
+        return "/account/dashboard";
+      case "cashier":
+      case "user":
+      default:
+        return "/cashier/pos";
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
     try {
-      await login(email, password);
-      navigate(callbackUrl);
+      const result = await login(email, password);
+      navigate(callbackUrl || getLandingUrl(result?.user?.role), { replace: true });
     } catch (err) {
       setError(err?.message || "Login failed. Please check your credentials.");
     } finally {

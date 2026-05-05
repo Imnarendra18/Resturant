@@ -82,7 +82,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cornsilk via-background to-cornsilk">
+    <div className="min-h-screen bg-gradient-to-br from-[#fff9ec] via-[#fdf2dc] to-[#eaf3dc]">
 
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -159,32 +159,42 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
         <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/10 rounded-full text-secondary mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#bc6c25]/10 border border-[#bc6c25]/20 rounded-full text-[#8a4d1b] mb-6">
             <Sparkles className="h-4 w-4" />
             <span className="text-sm font-medium">Complete Restaurant Management Solution</span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-primary mb-6 leading-tight">
+          <h1 className="text-5xl md:text-7xl font-bold text-[#1f2c12] mb-6 leading-tight">
             Manage Your Restaurant
             <br />
-            <span className="text-copper">Like Never Before</span>
+            <span className="bg-gradient-to-r from-[#a85a1c] via-[#bc6c25] to-[#d97706] bg-clip-text text-transparent">Like Never Before</span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
+          <p className="text-xl text-[#334225]/80 max-w-2xl mx-auto mb-10">
             All-in-one ERP system for restaurants. POS, inventory, accounting, staff management, and analytics — everything you need to run a successful restaurant.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="text-lg px-8 py-6 gap-2" onClick={handleDashboardClick}>
+            <Button
+              size="lg"
+              className="text-lg px-8 py-6 gap-2 bg-[#bc6c25] text-[#fff8ec] hover:bg-[#9f571d] shadow-lg shadow-[#bc6c25]/25"
+              onClick={handleDashboardClick}
+            >
               {session ? "Open Dashboard" : "Start Free Trial"}
               <ArrowRight className="h-5 w-5" />
             </Button>
             <Link to="#features">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6">Learn More</Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-lg px-8 py-6 border-[#8a9b64] text-[#2f3e1f] bg-[#ffffffcc] hover:bg-[#f5f8ea]"
+              >
+                Learn More
+              </Button>
             </Link>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-primary text-primary-foreground">
+      <section className="py-16 bg-gradient-to-r from-[#2e3d1f] via-[#3b4b2a] to-[#435634] text-[#f9f3de]">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>

@@ -123,6 +123,22 @@ const db = {
         { _id: "t2", tableNumber: "2", status: "occupied" },
       ],
     },
+    {
+      _id: "room-2",
+      name: "Gound1",
+      tables: [
+        { _id: "ta5", tableNumber: "A5", status: "open" },
+      ],
+    },
+    {
+      _id: "room-3",
+      name: "ground A1",
+      tables: [
+        { _id: "ta1g", tableNumber: "A1 ground", status: "open" },
+        { _id: "tb1", tableNumber: "B1", status: "open" },
+        { _id: "tc1", tableNumber: "C1", status: "open" },
+      ],
+    },
   ],
   orders: [
     {
@@ -276,6 +292,33 @@ function findTableById(id) {
     if (table) return { ...table, roomId: room._id, roomName: room.name };
   }
   return null;
+}
+
+function findTableRefById(id) {
+  for (const room of db.rooms) {
+    const table = room.tables.find((t) => t._id === id || t.tableNumber === id);
+    if (table) return table;
+  }
+  return null;
+}
+
+function syncTableStatuses() {
+  for (const room of db.rooms) {
+    for (const table of room.tables) {
+      table.status = "open";
+    }
+  }
+
+  for (const order of db.orders) {
+    if (order.status === "open" && order.orderType === "dine_in" && order.tableId) {
+      const table = findTableRefById(order.tableId);
+      if (table) table.status = "occupied";
+    }
+  }
+}
+
+function computeOrderTotal(order) {
+  return (order.items || []).reduce((sum, item) => sum + (item.totalPrice || 0), 0);
 }
 
 export const api = {
@@ -453,16 +496,29 @@ export const api = {
       return Object.values(grouped);
     },
   },
+  rooms: {
+    getAll: async () => {
+      syncTableStatuses();
+      return db.rooms;
+    },
+  },
   tables: {
     getById: async ({ id }) => findTableById(id),
   },
   orders: {
-    getActiveOrderWithItems: async ({ tableId }) => db.orders.find((o) => o.tableId === tableId && o.status === "open") || null,
+    getActiveOrderWithItems: async ({ tableId }) => {
+      const order = db.orders.find((o) => o.tableId === tableId && o.status === "open") || null;
+      if (!order) return null;
+      return { ...order, totalAmount: computeOrderTotal(order) };
+    },
+    listOpen: async () =>
+      db.orders
+        .filter((o) => o.status === "open")
+        .map((o) => ({ ...o, totalAmount: computeOrderTotal(o) })),
     create: async (payload) => {
       const order = { _id: uid(), status: "open", items: [], ...payload };
       db.orders.push(order);
-      const table = findTableById(payload.tableId);
-      if (table) table.status = "occupied";
+      syncTableStatuses();
       return order._id;
     },
     addItem: async ({ orderId, menuItemId, quantity, notes }) => {
@@ -480,17 +536,54 @@ export const api = {
       });
       return order;
     },
-    completePayment: async ({ orderId, paymentMethod }) => {
+    transferTable: async ({ fromTableId, toTableId }) => {
+      const order = db.orders.find((o) => o.tableId === fromTableId && o.status === "open");
+      const toTable = findTableRefById(toTableId);
+      if (!order || !toTable) return null;
+      order.tableId = toTableId;
+      syncTableStatuses();
+      return order;
+    },
+    completePayment: async ({ orderId, paymentMethod, amountPaid, discountAmount, totalAmount }) => {
       const order = db.orders.find((o) => o._id === orderId);
       if (order) {
         order.status = "completed";
         order.paymentMethod = paymentMethod;
+        order.amountPaid = amountPaid;
+        order.discountAmount = discountAmount || 0;
+        order.totalAmount = totalAmount || 0;
+        order.completedAt = Date.now();
       }
+      syncTableStatuses();
       return order;
     },
   },
   cashierSessions: {
-    getActive: async () => db.cashierSession,
+    getActive: async () => {
+      if (!db.cashierSession || db.cashierSession.closedAt) return null;
+      return db.cashierSession;
+    },
+    open: async ({ cashierId, openingCash }) => {
+      const now = Date.now();
+      db.cashierSession = {
+        _id: uid(),
+        cashierId: cashierId || "cashier-1",
+        openingCash: openingCash || 0,
+        startedAt: now,
+      };
+      db.sessionSummary = {
+        sessionId: db.cashierSession._id,
+        expectedCash: openingCash || 0,
+        totalSales: 0,
+        cashSales: 0,
+        cardSales: 0,
+        qrSales: 0,
+        creditSales: 0,
+        totalOrders: 0,
+        refunds: 0,
+      };
+      return db.cashierSession;
+    },
     close: async ({ sessionId, closingCash }) => {
       if (db.cashierSession && db.cashierSession._id === sessionId) {
         db.cashierSession.closedAt = Date.now();
@@ -500,6 +593,9 @@ export const api = {
     },
   },
   dashboard: {
-    getSessionSummary: async () => db.sessionSummary,
+    getSessionSummary: async () => {
+      if (!db.cashierSession || db.cashierSession.closedAt) return null;
+      return db.sessionSummary;
+    },
   },
 };

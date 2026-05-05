@@ -1,56 +1,125 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "@/lib/api";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { ArrowRightLeft, Package, Truck, Users, DollarSign, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 export default function POSPage() {
   const navigate = useNavigate();
-  const [rooms, setRooms] = useState([]);
-  const [orders, setOrders] = useState([]);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [showOpenSessionDialog, setShowOpenSessionDialog] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
   const [transferToTable, setTransferToTable] = useState("");
+  const [openingCash, setOpeningCash] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
+  const { data: authSession, isPending: isAuthPending } = authClient.useSession();
+  const cashierId = authSession?.user?.id;
+  
+  // Redirect if no auth session after loading
   useEffect(() => {
-    Promise.all([api.get("/rooms"), api.get("/orders?status=open")])
-      .then(([r, o]) => { setRooms(r); setOrders(o); })
-      .catch(console.error);
-  }, []);
+    if (!isAuthPending && !authSession?.user?.id) {
+      navigate("/login");
+    }
+  }, [isAuthPending, authSession, navigate]);
+  
+  const activeCashierSession = useQuery(api.cashierSessions.getActive, { cashierId: cashierId || "", refreshKey });
+  const openSession = useMutation(api.cashierSessions.open);
+  const transferTable = useMutation(api.orders.transferTable);
+
+  const roomsData = useQuery(api.rooms.getAll, { refreshKey }) || [];
+  const openOrders = useQuery(api.orders.listOpen, { refreshKey }) || [];
 
   // Flatten all tables across rooms
   const allTables = useMemo(() =>
-    rooms.flatMap((room) =>
+    roomsData.flatMap((room) =>
       room.tables.map((t) => ({ ...t, roomName: room.name, roomId: room._id }))
-    ), [rooms]);
+    ), [roomsData]);
 
   const runningTables = useMemo(() =>
     allTables
       .filter((t) => t.status === "occupied")
       .map((t) => ({
         ...t,
-        orderTotal: orders.find((o) => o.tableId === t._id)?.totalAmount || 0,
-      })), [allTables, orders]);
+          orderTotal: openOrders.find((o) => o.tableId === t._id)?.totalAmount || 0,
+        })), [allTables, openOrders]);
 
   const availableTables = useMemo(() =>
     allTables.filter((t) => t.status === "open"), [allTables]);
 
-  const todayRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const todayRevenue = openOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
   const handleTableClick = (tableId, status, roomId) => {
+    if (!activeCashierSession) {
+      toast.error("Open cashier session first.");
+      setShowOpenSessionDialog(true);
+      return;
+    }
     if (status === "open") navigate(`/cashier/pos/table/${tableId}?roomId=${roomId}&type=new`);
     else navigate(`/cashier/pos/table/${tableId}?roomId=${roomId}&type=existing`);
   };
 
-  const handleTransfer = () => {
+  const handleTransfer = async () => {
+    if (!activeCashierSession) {
+      toast.error("Open cashier session first.");
+      setShowOpenSessionDialog(true);
+      return;
+    }
     if (!selectedTable || !transferToTable) return toast.error("Please select both tables");
-    toast.info("Table transfer coming soon");
-    setShowTransferDialog(false);
+    try {
+      const updated = await transferTable({ fromTableId: selectedTable, toTableId: transferToTable });
+      if (!updated) {
+        toast.error("Unable to transfer table");
+        return;
+      }
+      toast.success("Table transferred successfully");
+      setShowTransferDialog(false);
+      setSelectedTable(null);
+      setTransferToTable("");
+      setRefreshKey((k) => k + 1);
+    } catch (error) {
+      toast.error("Failed to transfer table");
+    }
+  };
+
+  const handleOpenSession = async () => {
+    // Check if auth is still loading
+    if (isAuthPending) {
+      toast.error("Authenticating... Please wait");
+      return;
+    }
+    
+    // Check if cashier ID is available
+    if (!cashierId) {
+      toast.error("Authentication failed. Please login again.");
+      navigate("/login");
+      return;
+    }
+    
+    const openingCashNumber = Number(openingCash);
+    if (!Number.isFinite(openingCashNumber) || openingCashNumber < 0) {
+      toast.error("Enter valid opening cash amount");
+      return;
+    }
+
+    try {
+      await openSession({ cashierId, openingCash: openingCashNumber });
+      toast.success("Cashier session opened");
+      setShowOpenSessionDialog(false);
+      setOpeningCash("");
+      setRefreshKey((k) => k + 1);
+    } catch (error) {
+      toast.error("Failed to open cashier session");
+      console.error(error);
+    }
   };
 
   return (
@@ -121,7 +190,7 @@ export default function POSPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Open Orders</p>
-                  <p className="text-xl font-bold">{orders.length}</p>
+                  <p className="text-xl font-bold">{openOrders.length}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -149,6 +218,15 @@ export default function POSPage() {
           <section className="bg-card border border-border rounded-2xl p-5">
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
             <div className="space-y-3">
+              {activeCashierSession ? (
+                <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                  Session Active
+                </div>
+              ) : (
+                <Button variant="default" className="w-full justify-start gap-3 h-12" onClick={() => setShowOpenSessionDialog(true)}>
+                  <span>Open Cashier Session</span>
+                </Button>
+              )}
               <Button variant="outline" className="w-full justify-start gap-3 h-12" onClick={() => setShowTransferDialog(true)}>
                 <ArrowRightLeft className="w-5 h-5" />
                 <span>Transfer Table</span>
@@ -164,7 +242,14 @@ export default function POSPage() {
                 <TabsTrigger value="takeaway">Take Away</TabsTrigger>
               </TabsList>
               <TabsContent value="delivery">
-                <Button variant="outline" className="w-full h-16 justify-start gap-3" onClick={() => navigate("/cashier/pos/table/delivery?type=new")}>
+                <Button variant="outline" className="w-full h-16 justify-start gap-3" onClick={() => {
+                  if (!activeCashierSession) {
+                    toast.error("Open cashier session first.");
+                    setShowOpenSessionDialog(true);
+                    return;
+                  }
+                  navigate("/cashier/pos/table/delivery?type=new");
+                }}>
                   <Truck className="w-6 h-6" />
                   <div className="text-left">
                     <p className="font-semibold">New Delivery</p>
@@ -173,7 +258,14 @@ export default function POSPage() {
                 </Button>
               </TabsContent>
               <TabsContent value="takeaway">
-                <Button variant="outline" className="w-full h-16 justify-start gap-3" onClick={() => navigate("/cashier/pos/table/takeaway?type=new")}>
+                <Button variant="outline" className="w-full h-16 justify-start gap-3" onClick={() => {
+                  if (!activeCashierSession) {
+                    toast.error("Open cashier session first.");
+                    setShowOpenSessionDialog(true);
+                    return;
+                  }
+                  navigate("/cashier/pos/table/takeaway?type=new");
+                }}>
                   <Package className="w-6 h-6" />
                   <div className="text-left">
                     <p className="font-semibold">New Takeaway</p>
@@ -217,6 +309,31 @@ export default function POSPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowTransferDialog(false)}>Cancel</Button>
             <Button onClick={handleTransfer} disabled={!selectedTable || !transferToTable}>Transfer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Open Session Dialog */}
+      <Dialog open={showOpenSessionDialog} onOpenChange={setShowOpenSessionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Open Cashier Session</DialogTitle>
+            <DialogDescription>Start your shift by entering opening cash.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="opening-cash">Opening Cash</Label>
+            <Input
+              id="opening-cash"
+              type="number"
+              min="0"
+              value={openingCash}
+              onChange={(e) => setOpeningCash(e.target.value)}
+              placeholder="Enter opening cash"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowOpenSessionDialog(false)}>Cancel</Button>
+            <Button onClick={handleOpenSession}>Open Session</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
